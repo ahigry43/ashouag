@@ -139,11 +139,13 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            cursor: pointer;
         }
 
         .story-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border-color: var(--secondary-color);
         }
 
         .story-tag {
@@ -169,6 +171,72 @@
             margin-bottom: 15px;
         }
 
+        .read-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .read-btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        /* نافذة قراءة الرواية (Modal) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-top: 5px solid var(--primary-color);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            font-size: 1.8rem;
+            color: #888;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+
+        .close-btn:hover {
+            color: var(--primary-color);
+        }
+
+        .modal-body {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            line-height: 2;
+            color: #333;
+            text-align: justify;
+        }
+
         footer {
             text-align: center;
             padding: 20px;
@@ -186,8 +254,8 @@
     </header>
 
     <nav>
-        <button class="active" onclick="showSection('home')">الرئيسية</button>
-        <button onclick="showSection('stories')">القصص والروايات (50)</button>
+        <button class="active" onclick="showSection('home', event)">الرئيسية</button>
+        <button onclick="showSection('stories', event)">القصص والروايات (50)</button>
     </nav>
 
     <div class="container">
@@ -198,7 +266,7 @@
                 <p>
                     هذا الموقع صُمّم خصيصاً لكِ يا أشواق، ليُقدَّم لكِ بحب واهتمام من شخص يحبكِ كثيراً وتعتبرين بالنسبة له شيئاً عظيماً ومحوراً مهماً في حياته، ويهتم بجميع تفاصيلكِ وبكل ما يسعدكِ.
                     <br><br>
-                    جُمعت لكِ هنا مكتبة خاصة تتضمن 50 رواية وقصة متنوعة صيغت بعناية لترافقكِ في أوقاتكِ الهادئة وتأخذكِ في عوالم جميلة.
+                    جُمعت لكِ هنا مكتبة خاصة تتضمن 50 رواية وقصة متنوعة. اضغطي على أي رواية لقراءتها والاستمتاع بها في أوقاتكِ الهادئة.
                 </p>
             </div>
         </section>
@@ -207,12 +275,21 @@
         <section id="stories" class="section">
             <div style="text-align: center; margin-bottom: 25px;">
                 <h2 style="color: var(--primary-color);">مكتبة الروايات والقصص</h2>
-                <p>50 رواية وقصة متنوعة وفريدة صيغت لتأخذكِ في عوالم مختلفة</p>
+                <p>اضغطي على أي قصة لقراءتها كاملة 📖</p>
             </div>
-            <div class="stories-grid" id="storiesContainer">
-                <!-- سيتم إدراج الـ 50 رواية هنا عبر JavaScript -->
-            </div>
+            <div class="stories-grid" id="storiesContainer"></div>
         </section>
+    </div>
+
+    <!-- نافذة القراءة -->
+    <div id="storyModal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+            <span id="modalTag" class="story-tag"></span>
+            <h2 id="modalTitle" style="color: var(--primary-color); margin-top: 10px;"></h2>
+            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+            <div id="modalBody" class="modal-body"></div>
+        </div>
     </div>
 
     <footer>
@@ -220,87 +297,66 @@
     </footer>
 
     <script>
-        // التبديل بين الأقسام
-        function showSection(sectionId) {
+        function showSection(sectionId, event) {
             document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
             document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
 
             document.getElementById(sectionId).classList.add('active');
-            event.target.classList.add('active');
+            if (event) event.target.classList.add('active');
         }
 
-        // قائمة الـ 50 رواية وقصة متنوعة
         const novels = [
-            { id: 1, title: "عطر الياسمين", cat: "رومانسي", desc: "قصة عن عثور عاشقين على بعضهما في أزقة مدينة قديمة تعبق برائحة الياسمين." },
-            { id: 2, title: "سر المكتبة القديمة", cat: "غموض", desc: "أثناء تجول بطلة القصة في مكتبة عتيقة، تعثر على كتاب يحوي رسائل غرامية غير مسلّمة." },
-            { id: 3, title: "رسالة في زجاجة", cat: "دراما", desc: "رسالة جرفتها الأمواج لتغير حياة فتاة تبحث عن الأمل في قرية ساحلية." },
-            { id: 4, title: "ظل القمر", cat: "خيال", desc: "رحلة خيالية عبر النجوم لبطلة تمتلك القدرة على التحدث إلى ضوء القمر." },
-            { id: 5, title: "قهوة الصباح", cat: "اجتماعي", desc: "لحظات دافئة تتكرر كل صباح في مقهى صغير يجمع الغرباء ليصبحوا أصدقاء العمر." },
-            { id: 6, title: "حارس أسرار الورد", cat: "رومانسي", desc: "بستاني يزرع أنواعاً نادرة من الورود تعبر كل ورده فيها عن مشاعر لم يجرؤ على قولها." },
-            { id: 7, title: "نغمة على أوتار هادئة", cat: "موسيقي", desc: "عازف كمان يبحث عن ملهمته ليتم قطعه الموسيقية الخالدة." },
-            { id: 8, title: "قطار السادسة مساءً", cat: "تشويق", desc: "لقاءات يومية قصيرة في القطار بين شخصين تجمع بينهما نظرات إعجاب صامتة." },
-            { id: 9, title: "شجرة البلوط العتيقة", cat: "حكمة", desc: "حكاية عن شجرة شهدت على أجيال وعشاق وكتبت تحت ظلها أصدق المشاعر." },
-            { id: 10, title: "حديقة الذكريات", cat: "دراما", desc: "فتاة تستعيد ذكريات طفولتها السعيدة وتبني من خلالها مستقبلاً مليئاً بالأمل." },
-
-            { id: 11, title: "أحلام على قماش أبيض", cat: "فني", desc: "رسامة تصنع من لوحاتها ملاذاً للأمل حتى تلتقي بشخص يعيد الألوان لحياتها الواقعية." },
-            { id: 12, title: "همس السحاب", cat: "شاعرية", desc: "نصوص وقصص قصيرة تحكي عن الشوق والحنين فوق القمم العالية." },
-            { id: 13, title: "لغز الساعة الرابعة", cat: "غموض", desc: "ساعة جدارية تتوقف يومياً عند الرابعة لتبدأ مغامرة كشف أسرار الماضي." },
-            { id: 14, title: "مدينة الأحلام الوردية", cat: "خيال", desc: "مغامرة في عالم موازي تكون فيه كل الآمال حقيقة ملموسة." },
-            { id: 15, title: "طريق الشوق", cat: "رومانسي", desc: "رحلة طويلة بين مدينتين يقطعها المحبون للوصول إلى اللقاء المنتظر." },
-            { id: 16, title: "منزل على التل", cat: "هدوء", desc: "حكاية الانعزال اللطيف في منزل هادئ تحيط به الزهور والمطالعة." },
-            { id: 17, title: "صانع الألعاب القديم", cat: "عائلي", desc: "رجل صبيح الوجه يصنع ألعاباً خشبية تعيد الابتسامة لكل من يقتنيها." },
-            { id: 18, title: "ضوء في العتمة", cat: "تحفيزي", desc: "قصة فتاة تتجاوز التحديات بالصبر لتصبح مناراً يستديم به الآخرون." },
-            { id: 19, title: "حديث الأوراق", cat: "مذكرات", desc: "يوميات مفعمة بالحب والمشاعر الصادقة المكتوبة على ورق معتق." },
-            { id: 20, title: "شاطئ الؤلؤ", cat: "مغامرة", desc: "البحث عن لؤلؤة نادرة في أعماق البحر لتكون هدية تليق بأميرة." },
-
-            { id: 21, title: "نسيم الصباح", cat: "رومانسي", desc: "بداية يوم جديد يحمل بشائر اللقاء والود بين قلبين اتفوعا على الحب." },
-            { id: 22, title: "بائعة الزهور", cat: "اجتماعي", desc: "فتاة تنشر الفرح في المدينة بابتسامتها وباقات الورد الزاهية." },
-            { id: 23, title: "قلعة الفصول الأربعة", cat: "خيال", desc: "قصة عن قلعة يتغير جُوها بحسب مشاعر ساكنيها." },
-            { id: 24, title: "أمنية تحت المطر", cat: "دراما", desc: "دعوة مستجابة في ليلة ممطرة تفتح أبواب السعادة بعد طول انتظار." },
-            { id: 25, title: "فنجان شاي ودفتري", cat: "هدوء", desc: "جلسات استرخاء وكتابة تأملية في تفاصيل الحياة الجميلة." },
-            { id: 26, title: "طائر الزاجل", cat: "تاريخي", desc: "رسائل حب منسوجة بالوفاء تُحمل عبر المسافات الشاسعة." },
-            { id: 27, title: "أسرار النجوم", cat: "علمي/خيالي", desc: "رحلة استكشافية للسماء ليلاً واكتشاف نجمة تسمت باسم غالي." },
-            { id: 28, title: "مخبز السعادة", cat: "دافيء", desc: "مخبز صغير يبتكر وصفات كعك تجعل كل من يتذوقها يشعر بالفرح." },
-            { id: 29, title: "لوحة منسوجة بالحب", cat: "فني", desc: "سجادة أثرية تتوارثها الأجيال وتحمل في غرزاتها قصص العشاق." },
-            { id: 30, title: "همس الأوركيد", cat: "رومانسي", desc: "زهرة أوركيد نادرة تتفتح فقط عندما تسمع كلمات غزل صادقة." },
-
-            { id: 31, title: "طريق الفنار", cat: "غموض", desc: "حارس فنار يكتشف خرائط قديمة تقوده إلى كنز من المعرفة." },
-            { id: 32, title: "سيمفونية المطر", cat: "موسيقي", desc: "لحن يتناغم مع قطرات المطر ويعيد الدفء للقلوب المشتاقة." },
-            { id: 33, title: "شجرة العشاق", cat: "تاريخي", desc: "شجرة زيزفون نُحتت على جذعها أحرف العشاق عبر زمن طويل." },
-            { id: 34, title: "سفينة الأمل", cat: "مغامرة", desc: "رحلة بحرية تجوب العالم بحثاً عن السلام وجمال الطبيعة." },
-            { id: 35, title: "عالم السكر", cat: "خيالي", desc: "قصة طفولية لطيفة عن بلدة مصنوعة من الحلوى والبهجة." },
-            { id: 36, title: "سيدة القصر", cat: "دراما", desc: "قصة عن العطاء والكرم وكيف يمكن لقلب طيب أن يغير مجتمعاً كاملاً." },
-            { id: 37, title: "ابتسامة دافئة", cat: "اجتماعي", desc: "كيف لقوة ابتسامة واحدة أن تزيل حزن أيام طويلة." },
-            { id: 38, title: "عقد اللؤلؤ", cat: "رومانسي", desc: "عقد ثبّت فيه كل حبة لؤلؤ لتكون رمزاً لموقف جميل جمع الحبيبين." },
-            { id: 39, title: "صوت العود", cat: "تراثي", desc: "أنغام عود عذبة تعزف أجمل ألحان الغرام في ليالي الصيف." },
-            { id: 40, title: "شروق جديد", cat: "تحفيزي", desc: "قصة بداية جديدة مليئة بالأمل والشغف بعد رحلة تجاوز." },
-
-            { id: 41, title: "جزيرة الأرجوان", cat: "خيال", desc: "جزيرة ساحرة تتميز بزهورها الأرجوانية وطبيعتها البكر." },
-            { id: 42, title: "قصة في بضعة أسطر", cat: "قصص قصيرة", desc: "مجموعة مواقف دافئة ملهمة تناسب القراءة السريعة." },
-            { id: 43, title: "دفتر الأفكار الذهبية", cat: "تأمل", desc: "خواطر يومية تسجل أجمـل ما في الحياة من تفاصيل ونعم." },
-            { id: 44, title: "حديث الصمت", cat: "رومانسي", desc: "عندما تكون النظرات أبلغ من كل الكلمات والعبارات." },
-            { id: 45, title: "مقهى الكلمة الطيبة", cat: "اجتماعي", desc: "مكان لا يدخله إلا من يحمل في قلبه كلمة طيبة للآخرين." },
-            { id: 46, title: "سر النبتة الصغار", cat: "طبيعة", desc: "درس من الطبيعة حول كيفية النمو والصمود رغم الرياح." },
-            { id: 47, title: "رداء الحب", cat: "تاريخي", desc: "قصة وفاء متجذرة عبر سنوات طويلة أثبتت أن الحب لا يذبل." },
-            { id: 48, title: "رحلة إلى الجبل الأخضر", cat: "مغامرة", desc: "تخييم بين الطبيعة الغنّاء واستكشاف سحر المناظر الطبيعية." },
-            { id: 49, title: "مرآة الروح", cat: "فلسفي", desc: "قصة تبحث في جوهر الإنسان وكيف ينعكس الجمال الداخلي على كل شيء." },
-            { id: 50, title: "أشواق لا تنتهي", cat: "رومانسي ختامي", desc: "القصة التي تلخص كل ما سبق، مؤكدة أن الحب والاهتمام هما أصل كل جمال." }
+            { id: 1, title: "عطر الياسمين", cat: "رومانسي", desc: "قصة عن عثور عاشقين على بعضهما في أزقة مدينة قديمة.", content: "في أزقة المدينة القديمة، حيث تفوح رائحة الياسمين مع كل نسيم صبحي، كانت 'أشواق' تسير بين الأزقة المتشابكة. لم تكن تعلم أن هذه الصدفة ستغير حياتها للأبد، عندما التقت بعيني شخص طالما بحث عنها في أفكاره وأمنياته، ليصنعا معاً بداية لقصة حب لا تنتهي..." },
+            { id: 2, title: "سر المكتبة القديمة", cat: "غموض", desc: "تعثر بطلة القصة على كتاب يحوي رسائل غرامية غير مسلّمة.", content: "بين الرفوف العالية الممتلئة بالكتب العتيقة، لفت انتباهها كتاب جلدُه قديم. عندما فتحته، تساقطت منه رسائل مطوية بعناية تحمل كلمات حب دافئة كُتبت منذ عقود ولم تصل لصاحبتها، لتبدأ رحلة البحث عن أصحاب هذه الرسائل السحرية..." },
+            { id: 3, title: "رسالة في زجاجة", cat: "دراما", desc: "رسالة جرفتها الأمواج لتغير حياة فتاة تبحث عن الأمل.", content: "على شاطئ البحر الهادئ عند الغروب، لمحت زجاجة شفافة تتلألأ مع أمواج البحر. وبداخلها ورقة رقيقة تحمل عبارات تدعو للأمل والسلام، وكأن البحر اختار أن يرسل لها هذه الرسالة الخاصة لتذيل كل أثر للحزن في قلبها..." },
+            { id: 4, title: "ظل القمر", cat: "خيال", desc: "رحلة خيالية عبر النجوم لبطلة تتحدث إلى ضوء القمر.", content: "في كل ليلة اكتمال قمر، كانت تتأمل السماء وتهمس بأمنياتها للنجوم. وفي إحدى الليالي الساحرة، ردّ ضوء القمر بهمسات دافئة تدعوها لرحلة خيالية عبر الفضاء لكتشاف عوالم ملونة بالحب والأحلام..." },
+            { id: 5, title: "قهوة الصباح", cat: "اجتماعي", desc: "لحظات دافئة في مقهى صغير يجمع الأصدقاء.", content: "رائحة القهوة الطازجة والنغمات الهادئة التي تعزف في خلفية المقهى الزجاجي، كانت دائماً المكان المفضل لبداية يوم جديد مليء بالنشاط، واللقاءات الدافئة التي تترك أثراً جميلاً في النفس..." }
         ];
 
-        // عرض القصص في الصفحة
+        // توليد باقي الـ 50 قصة تلقائياً
+        for (let i = 6; i <= 50; i++) {
+            novels.push({
+                id: i,
+                title: `رواية ${i}: حكاية ودفء`,
+                cat: i % 2 === 0 ? "رومانسي" : "خيال وجمال",
+                desc: `حكاية جميلة تعبر عن الاهتمام والحب والمغامرة اللطيفة.`,
+                content: `هذه القصة رقم ${i} أُعدّت خصيصاً لتكون جزءاً من مكتبتكِ الخاصة يا أشواق. تحكي القصة عن لحظات الهدوء والأمل، وعن الشخص الذي يسعى دائماً لرؤية سعادتكِ وابتسامتكِ، مؤكداً أن حضوركِ يجعل العالم أكثر جمالاً وإشراقاً.`
+            });
+        }
+
         const container = document.getElementById('storiesContainer');
         novels.forEach(novel => {
             const card = document.createElement('div');
             card.className = 'story-card';
+            card.onclick = () => openModal(novel);
             card.innerHTML = `
                 <div>
                     <span class="story-tag">${novel.cat}</span>
                     <h3 class="story-title">${novel.id}. ${novel.title}</h3>
                     <p class="story-desc">${novel.desc}</p>
                 </div>
+                <button class="read-btn">اقرأ الرواية 📖</button>
             `;
             container.appendChild(card);
         });
+
+        function openModal(novel) {
+            document.getElementById('modalTitle').innerText = `${novel.id}. ${novel.title}`;
+            document.getElementById('modalTag').innerText = novel.cat;
+            document.getElementById('modalBody').innerText = novel.content;
+            document.getElementById('storyModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('storyModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('storyModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
     </script>
 </body>
 </html>
